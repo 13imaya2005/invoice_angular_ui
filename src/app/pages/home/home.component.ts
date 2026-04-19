@@ -1,6 +1,6 @@
 import { Component } from "@angular/core";
 import { CommonModule } from "@angular/common";
-import { AuthService } from '../../services/auth.serfinishedvice';
+import { AuthService } from "../../services/auth.service";
 import { LoginRequest } from '../../models/loginrequest';
 import { FormsModule } from '@angular/forms';
  

@@ -12,8 +12,9 @@
     <button mat-menu-item routerLink="/masters/vendors">Vendors</button>
   </mat-menu>
  
+ 
   <!-- Transactions Menu -->
-  <button mat-button [matMenuTriggerFor]="transMenu" routerLinkActive="active-link">Transactions</button>
+ <button mat-button [matMenuTriggerFor]="transMenu" routerLinkActive="active-link">Transactions</button>
   <mat-menu #transMenu="matMenu">
     <button mat-menu-item routerLink="/transactions/indent">Indent</button>
     <button mat-menu-item routerLink="/transactions/po">Purchase Order</button>
@@ -28,9 +29,14 @@
  
   <span class="spacer"></span>
  
-  <button mat-button color="warn">Exit</button>
+  <button mat-button color="warn" [matMenuTriggerFor]="exitMenu" routerLinkActive="active-link">Exit</button>
+  <mat-menu #exitMenu="matMenu">
+    <button mat-menu-item routerLink="/exit/logout">Logout</button>
+  </mat-menu>
+ 
  
 </mat-toolbar>
  
 <!-- Route View -->
 <router-outlet></router-outlet>
+ 
