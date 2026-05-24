@@ -1,0 +1,140 @@
+<div class="item-form-small" style="margin: 20px">
+  <h3>{{ isEdit ? "Edit Item" : "Create Item" }}</h3>
+  <mat-dialog-content>
+    <form [formGroup]="form" (ngSubmit)="submit()" *ngIf="form">
+      <!-- Category -->
+      <div class="form-field">
+        <mat-form-field appearance="outline" style="width: 50%">
+          <mat-label>Category</mat-label>
+          <input matInput formControlName="Code" appSelectOnFocus />
+          <mat-error
+            class="error-text"
+            *ngIf="
+              (isSubmitted || f['Code'].touched) &&
+              f['Code'].errors?.['required']
+            "
+          >
+            <mat-icon color="warn">error</mat-icon> Category is required
+          </mat-error>
+          <mat-error
+            class="error-text"
+            *ngIf="
+              (isSubmitted || f['Code'].touched) &&
+              f['Code'].errors?.['minlength']
+            "
+          >
+            <mat-icon color="warn">error</mat-icon> Minimum
+            {{ f["Code"].errors?.["minlength"]?.requiredLength }} character
+            required
+          </mat-error>
+          <mat-error
+            class="error-text"
+            *ngIf="
+              (isSubmitted || f['Code'].touched) &&
+              f['Code'].errors?.['maxlength']
+            "
+          >
+            <mat-icon color="warn">error</mat-icon> Maximum
+            {{ f["Code"].errors?.["maxlength"]?.requiredLength }} characters
+            allowed
+          </mat-error>
+        </mat-form-field>
+      </div>
+ 
+ 
+     
+      <!-- Name -->
+      <div class="form-field">
+        <mat-form-field appearance="outline" style="width: 50%">
+          <mat-label> Name</mat-label>
+          <input matInput formControlName="Name" appSelectOnFocus />
+          <mat-error
+            class="error-text"
+            *ngIf="
+              (isSubmitted || f['Name'].touched) &&
+              f['Name'].errors?.['required']
+            "
+          >
+            <mat-icon color="warn">error</mat-icon>  Name is required
+          </mat-error>
+          <mat-error
+            class="error-text"
+            *ngIf="
+              (isSubmitted || f['Name'].touched) &&
+              f['Name'].errors?.['minlength']
+            "
+          >
+            <mat-icon color="warn">error</mat-icon> Minimum
+            {{ f["Name"].errors?.["minlength"]?.requiredLength }} character
+            required
+          </mat-error>
+          <mat-error
+            class="error-text"
+            *ngIf="
+              (isSubmitted || f['Name'].touched) &&
+              f['Name'].errors?.['maxlength']
+            "
+          >
+            <mat-icon color="warn">error</mat-icon> Maximum
+            {{ f["Name"].errors?.["maxlength"]?.requiredLength }} characters
+            allowed
+          </mat-error>
+        </mat-form-field>
+      </div>
+ 
+      <!-- Description -->
+      <div class="form-field">
+        <mat-form-field appearance="outline" style="width: 50%">
+          <mat-label>Description</mat-label>
+          <textarea
+            matInput
+            formControlName="description"
+            rows="3"
+            appSelectOnFocus
+          ></textarea>
+          <mat-error
+            class="error-text"
+            *ngIf="
+              (isSubmitted || f['description'].touched) &&
+              f['description'].errors?.['maxlength']
+            "
+          >
+            <mat-icon color="warn">error</mat-icon> Maximum
+            {{
+              f["description"].errors?.["maxlength"]?.requiredLength
+            }}
+            characters allowed
+          </mat-error>
+        </mat-form-field>
+      </div>
+ 
+     
+ 
+      <!-- Is Active -->
+      <div class="form-field">
+        <mat-label>Is Active?</mat-label>
+        <mat-radio-group formControlName="isActive" class="radio-group">
+          <mat-radio-button [value]="true" color="primary"
+            >Active</mat-radio-button
+          >
+          <mat-radio-button [value]="false" color="warn"
+            >Inactive</mat-radio-button
+          >
+        </mat-radio-group>
+      </div>
+      <br />
+      <!-- Buttons -->
+      <button mat-flat-button color="primary">
+        {{ isEdit ? "Update" : "Save" }}
+      </button>
+      <button
+        mat-stroked-button
+        (click)="dialogRef.close()"
+        style="margin-left: 10px"
+      >
+        Cancel
+      </button>
+    </form>
+  </mat-dialog-content>
+</div>
+ 

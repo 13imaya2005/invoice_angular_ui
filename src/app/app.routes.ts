@@ -10,7 +10,7 @@ export const routes: Routes = [
     path: 'masters',
     canActivate: [authGuard],
     children: [
-      { path: 'categories', loadComponent: () => import('./components/item-list/item-list.component').then(m => m.ItemListComponent) },
+      { path: 'categories', loadComponent: () => import('./components/cat-list/Cat-list.component').then(m => m.CategoryListComponent) },
       { path: 'items', loadComponent: () => import('./components/item-list/item-list.component').then(m => m.ItemListComponent) },
       { path: 'items/create', loadComponent: () => import('./components/item-form/item-form.component').then(m => m.ItemFormComponent) },
       { path: 'items/edit/:id', loadComponent: () => import('./components/item-form/item-form.component').then(m => m.ItemFormComponent) },
