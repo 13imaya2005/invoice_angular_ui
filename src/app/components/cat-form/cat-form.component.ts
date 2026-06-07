@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
  
-import { CategoryService} from '../../services/';
+import { CategoryService } from '../../services/category.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
  
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -18,7 +18,7 @@ import {
   MatDialogContent,
 } from '@angular/material/dialog';
  
-import { Category } from '../../models/Category';
+import { Category } from '../../models/category';
 import { SelectOnFocusDirective } from "../../custom-directives/select-on-focus.directive";
  
 @Component({

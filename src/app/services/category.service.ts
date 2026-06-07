@@ -9,7 +9,7 @@ import { PagedResult }from "../models/paged-result";
  
 export class CategoryService
 {
-    private apiUrl="http://localhost:5234/api/Category";
+    private apiUrl="http://localhost:5027/api/Category";
     items = signal<Category[]>([]);
     constructor(private http:HttpClient){}
     getPagedcategory(
