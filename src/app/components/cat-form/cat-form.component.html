@@ -1,17 +1,17 @@
 <div class="item-form-small" style="margin: 20px">
-  <h3>{{ isEdit ? "Edit Item" : "Create Item" }}</h3>
+  <h3>{{ isEdit ? "Edit Category" : "Create Category" }}</h3>
   <mat-dialog-content>
     <form [formGroup]="form" (ngSubmit)="submit()" *ngIf="form">
       <!-- Category -->
       <div class="form-field">
         <mat-form-field appearance="outline" style="width: 50%">
           <mat-label>Category</mat-label>
-          <input matInput formControlName="Code" appSelectOnFocus />
+          <input matInput formControlName="code" appSelectOnFocus />
           <mat-error
             class="error-text"
             *ngIf="
-              (isSubmitted || f['Code'].touched) &&
-              f['Code'].errors?.['required']
+              (isSubmitted || f['code'].touched) &&
+              f['code'].errors?.['required']
             "
           >
             <mat-icon color="warn">error</mat-icon> Category is required
@@ -19,23 +19,23 @@
           <mat-error
             class="error-text"
             *ngIf="
-              (isSubmitted || f['Code'].touched) &&
-              f['Code'].errors?.['minlength']
+              (isSubmitted || f['code'].touched) &&
+              f['code'].errors?.['minlength']
             "
           >
             <mat-icon color="warn">error</mat-icon> Minimum
-            {{ f["Code"].errors?.["minlength"]?.requiredLength }} character
+            {{ f["code"].errors?.["minlength"]?.requiredLength }} character
             required
           </mat-error>
           <mat-error
             class="error-text"
             *ngIf="
-              (isSubmitted || f['Code'].touched) &&
-              f['Code'].errors?.['maxlength']
+              (isSubmitted || f['code'].touched) &&
+              f['code'].errors?.['maxlength']
             "
           >
             <mat-icon color="warn">error</mat-icon> Maximum
-            {{ f["Code"].errors?.["maxlength"]?.requiredLength }} characters
+            {{ f["code"].errors?.["maxlength"]?.requiredLength }} characters
             allowed
           </mat-error>
         </mat-form-field>
@@ -47,12 +47,12 @@
       <div class="form-field">
         <mat-form-field appearance="outline" style="width: 50%">
           <mat-label> Name</mat-label>
-          <input matInput formControlName="Name" appSelectOnFocus />
+          <input matInput formControlName="name" appSelectOnFocus />
           <mat-error
             class="error-text"
             *ngIf="
-              (isSubmitted || f['Name'].touched) &&
-              f['Name'].errors?.['required']
+              (isSubmitted || f['name'].touched) &&
+              f['name'].errors?.['required']
             "
           >
             <mat-icon color="warn">error</mat-icon>  Name is required
@@ -60,23 +60,23 @@
           <mat-error
             class="error-text"
             *ngIf="
-              (isSubmitted || f['Name'].touched) &&
-              f['Name'].errors?.['minlength']
+              (isSubmitted || f['name'].touched) &&
+              f['name'].errors?.['minlength']
             "
           >
             <mat-icon color="warn">error</mat-icon> Minimum
-            {{ f["Name"].errors?.["minlength"]?.requiredLength }} character
+            {{ f["name"].errors?.["minlength"]?.requiredLength }} character
             required
           </mat-error>
           <mat-error
             class="error-text"
             *ngIf="
-              (isSubmitted || f['Name'].touched) &&
-              f['Name'].errors?.['maxlength']
+              (isSubmitted || f['name'].touched) &&
+              f['name'].errors?.['maxlength']
             "
           >
             <mat-icon color="warn">error</mat-icon> Maximum
-            {{ f["Name"].errors?.["maxlength"]?.requiredLength }} characters
+            {{ f["name"].errors?.["maxlength"]?.requiredLength }} characters
             allowed
           </mat-error>
         </mat-form-field>
