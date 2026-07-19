@@ -1,0 +1,161 @@
+<div style="margin:20px">
+
+  <div *ngIf="isLoading">Loading...</div>
+
+  <form
+    [formGroup]="filterForm"
+    style="margin-bottom:10px; display:flex; gap:10px; flex-wrap:wrap;">
+
+    <mat-form-field appearance="outline">
+      <mat-label>Customer Code</mat-label>
+      <input matInput formControlName="Code">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Customer Name</mat-label>
+      <input matInput formControlName="Name">
+    </mat-form-field>
+
+    <button
+      mat-stroked-button
+      type="button"
+      (click)="clearFilters()">
+      Clear
+    </button>
+
+    <button
+      mat-flat-button
+      color="primary"
+      type="button"
+      (click)="openAddDialog()">
+      Add Customer
+    </button>
+
+  </form>
+
+  <table
+    mat-table
+    [dataSource]="dataSource"
+    matSort
+    class="mat-elevation-z8"
+    style="width:100%">
+
+    <!-- Customer Code -->
+    <ng-container matColumnDef="Code">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>
+        Customer Code
+      </th>
+      <td mat-cell *matCellDef="let customer">
+        {{ customer.customerCode }}
+      </td>
+    </ng-container>
+
+    <!-- Customer Name -->
+    <ng-container matColumnDef="Name">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>
+        Customer Name
+      </th>
+      <td mat-cell *matCellDef="let customer">
+        {{ customer.customerName }}
+      </td>
+    </ng-container>
+
+    <!-- Contact Person -->
+    <ng-container matColumnDef="contactPerson">
+      <th mat-header-cell *matHeaderCellDef>
+        Contact Person
+      </th>
+      <td mat-cell *matCellDef="let customer">
+        {{ customer.contactPerson }}
+      </td>
+    </ng-container>
+
+    <!-- Email -->
+    <ng-container matColumnDef="email">
+      <th mat-header-cell *matHeaderCellDef>
+        Email
+      </th>
+      <td mat-cell *matCellDef="let customer">
+        {{ customer.email }}
+      </td>
+    </ng-container>
+
+    <!-- Phone -->
+    <ng-container matColumnDef="phoneNumber">
+      <th mat-header-cell *matHeaderCellDef>
+        Phone
+      </th>
+      <td mat-cell *matCellDef="let customer">
+        {{ customer.mobileNo }}
+      </td>
+    </ng-container>
+
+    <!-- GST -->
+    <ng-container matColumnDef="gstNumber">
+      <th mat-header-cell *matHeaderCellDef>
+        GST Number
+      </th>
+      <td mat-cell *matCellDef="let customer">
+        {{ customer.gstNo }}
+      </td>
+    </ng-container>
+
+    <!-- City -->
+    <ng-container matColumnDef="city">
+      <th mat-header-cell *matHeaderCellDef>
+        City
+      </th>
+      <td mat-cell *matCellDef="let customer">
+        {{ customer.city }}
+      </td>
+    </ng-container>
+
+    <!-- Status -->
+    <ng-container matColumnDef="isActive">
+      <th mat-header-cell *matHeaderCellDef>
+        Status
+      </th>
+      <td mat-cell *matCellDef="let customer">
+        {{ customer.isActive ? 'Active' : 'Inactive' }}
+      </td>
+    </ng-container>
+
+    <!-- Actions -->
+    <ng-container matColumnDef="actions">
+      <th mat-header-cell *matHeaderCellDef>
+        Actions
+      </th>
+      <td mat-cell *matCellDef="let customer">
+
+        <button
+          mat-flat-button
+          color="primary"
+          (click)="openEditDialog(customer)">
+          Edit
+        </button>
+
+        <button
+          mat-flat-button
+          color="warn"
+          (click)="delete(customer.id, customer.customerName)">
+          Delete
+        </button>
+
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+  </table>
+
+  <mat-paginator
+    [length]="totalRecords"
+    [pageSize]="pageSize"
+    [pageIndex]="pageIndex"
+    [pageSizeOptions]="[5,10,25,50]"
+    showFirstLastButtons
+    (page)="onPageChange($event)">
+  </mat-paginator>
+
+</div>
