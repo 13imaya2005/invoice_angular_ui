@@ -1,0 +1,161 @@
+<div style="margin:20px">
+
+  <div *ngIf="isLoading">Loading...</div>
+
+  <form
+    [formGroup]="filterForm"
+    style="margin-bottom:10px; display:flex; gap:10px; flex-wrap:wrap;">
+
+    <mat-form-field appearance="outline">
+      <mat-label>Vendor Code</mat-label>
+      <input matInput formControlName="VendorCode">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Vendor Name</mat-label>
+      <input matInput formControlName="VendorName">
+    </mat-form-field>
+
+    <button
+      mat-stroked-button
+      type="button"
+      (click)="clearFilters()">
+      Clear
+    </button>
+
+    <button
+      mat-flat-button
+      color="primary"
+      type="button"
+      (click)="openAddDialog()">
+      Add Vendor
+    </button>
+
+  </form>
+
+  <table
+    mat-table
+    [dataSource]="dataSource"
+    matSort
+    class="mat-elevation-z8"
+    style="width:100%">
+
+    <!-- Vendor Code -->
+    <ng-container matColumnDef="VendorCode">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>
+        Vendor Code
+      </th>
+      <td mat-cell *matCellDef="let vendor">
+        {{ vendor.vendorCode }}
+      </td>
+    </ng-container>
+
+    <!-- Vendor Name -->
+    <ng-container matColumnDef="VendorName">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>
+        Vendor Name
+      </th>
+      <td mat-cell *matCellDef="let vendor">
+        {{ vendor.vendorName }}
+      </td>
+    </ng-container>
+
+    <!-- Contact Person -->
+    <ng-container matColumnDef="contactPerson">
+      <th mat-header-cell *matHeaderCellDef>
+        Contact Person
+      </th>
+      <td mat-cell *matCellDef="let vendor">
+        {{ vendor.contactPerson }}
+      </td>
+    </ng-container>
+
+    <!-- Mobile -->
+    <ng-container matColumnDef="mobileNo">
+      <th mat-header-cell *matHeaderCellDef>
+        Mobile No
+      </th>
+      <td mat-cell *matCellDef="let vendor">
+        {{ vendor.mobileNo }}
+      </td>
+    </ng-container>
+
+    <!-- Email -->
+    <ng-container matColumnDef="email">
+      <th mat-header-cell *matHeaderCellDef>
+        Email
+      </th>
+      <td mat-cell *matCellDef="let vendor">
+        {{ vendor.email }}
+      </td>
+    </ng-container>
+
+    <!-- GST -->
+    <ng-container matColumnDef="gstNo">
+      <th mat-header-cell *matHeaderCellDef>
+        GST No
+      </th>
+      <td mat-cell *matCellDef="let vendor">
+        {{ vendor.gstNo }}
+      </td>
+    </ng-container>
+
+    <!-- City -->
+    <ng-container matColumnDef="city">
+      <th mat-header-cell *matHeaderCellDef>
+        City
+      </th>
+      <td mat-cell *matCellDef="let vendor">
+        {{ vendor.city }}
+      </td>
+    </ng-container>
+
+    <!-- Status -->
+    <ng-container matColumnDef="isActive">
+      <th mat-header-cell *matHeaderCellDef>
+        Status
+      </th>
+      <td mat-cell *matCellDef="let vendor">
+        {{ vendor.isActive ? 'Active' : 'Inactive' }}
+      </td>
+    </ng-container>
+
+    <!-- Actions -->
+    <ng-container matColumnDef="actions">
+      <th mat-header-cell *matHeaderCellDef>
+        Actions
+      </th>
+      <td mat-cell *matCellDef="let vendor">
+
+        <button
+          mat-flat-button
+          color="primary"
+          (click)="openEditDialog(vendor)">
+          Edit
+        </button>
+
+        <button
+          mat-flat-button
+          color="warn"
+          (click)="delete(vendor.id, vendor.vendorName)">
+          Delete
+        </button>
+
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+  </table>
+
+  <mat-paginator
+    [length]="totalRecords"
+    [pageSize]="pageSize"
+    [pageIndex]="pageIndex"
+    [pageSizeOptions]="[5,10,25,50]"
+    showFirstLastButtons
+    (page)="onPageChange($event)">
+  </mat-paginator>
+
+</div>
