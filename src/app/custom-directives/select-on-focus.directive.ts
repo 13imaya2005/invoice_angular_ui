@@ -1,5 +1,5 @@
 import { Directive, HostListener } from '@angular/core';
- 
+
 @Directive({
   selector: '[appSelectOnFocus]',
   standalone: true

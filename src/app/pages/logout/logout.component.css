@@ -6,7 +6,7 @@
   background: linear-gradient(135deg, #ff7e5f, #feb47b);
   font-family: Arial, sans-serif;
 }
- 
+
 /* Container */
 div {
   background: white;
@@ -15,13 +15,13 @@ div {
   text-align: center;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
 }
- 
+
 /* Title */
 h2 {
   margin-bottom: 20px;
   color: #333;
 }
- 
+
 /* Button */
 button {
   padding: 10px 20px;
@@ -33,7 +33,7 @@ button {
   cursor: pointer;
   transition: 0.3s;
 }
- 
+
 button:hover {
   background: #cc0000;
 }

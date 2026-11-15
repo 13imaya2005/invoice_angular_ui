@@ -1,56 +1,52 @@
-import {Injectable,signal} from "@angular/core";
-import { HttpClient, HttpParams } from "@angular/common/http";
-import { Observable } from "rxjs";
-import { Category } from "../models/category";
-import { PagedResult }from "../models/paged-result";
- 
- 
-@Injectable({providedIn:'root'})
- 
-export class CategoryService
-{
-    private apiUrl="http://localhost:5027/api/Category";
-    categories = signal<Category[]>([]);
-    constructor(private http:HttpClient){}
-    getPagedcategory(
-    Code: string,
-    Name: string,
-    pageNumber: number,
-    pageSize: number
- 
-    ):Observable<PagedResult<Category>> {
-    let params = new HttpParams()
-      .set('Code', Code || '')
-      .set('Name', Name || '')
-      .set('pageNumber', pageNumber)
-      .set('pageSize', pageSize);
- 
-    return this.http.get<PagedResult<Category>>(
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+import { environment } from '../../environments/environment';
+import { Category } from '../models/category';
+import { CategoryFilter } from '../models/category-filter';
+import { PagedResult } from '../models/paged-result';
+import { ApiResponse } from '../models/api-response';
+
+@Injectable({
+  providedIn: 'root',
+})
+export class CategoryService {
+  private readonly http = inject(HttpClient);
+
+  private readonly apiUrl = `${environment.apiUrl}/v1/Category`;
+
+  getPagedCategories(
+    filter: CategoryFilter,
+  ): Observable<ApiResponse<PagedResult<Category>>> {
+    const params = new HttpParams()
+      .set('code', filter.code || '')
+      .set('name', filter.name || '')
+      .set('pageNumber', filter.pageNumber)
+      .set('pageSize', filter.pageSize);
+
+    return this.http.get<ApiResponse<PagedResult<Category>>>(
       `${this.apiUrl}/GetAllPaged`,
-      { params }
+      { params },
     );
   }
- 
- 
-    GetAll():Observable<Category[]>
-    {
-        return this.http.get<Category[]>(`${this.apiUrl}/GetAll`);
-    }
-    GetById(Id:number):Observable<Category>
-    {
-        return this.http.get<Category>(`${this.apiUrl}/GetById/${Id}`);
-    }
-    create(request:Category):Observable<number>
-    {
-        return this.http.post<number>(`${this.apiUrl}/Create`,request);
-    }
-    Update(Id:number, request:Category):Observable<boolean>
-    {
-        return this.http.put<boolean>(`${this.apiUrl}/Update/${Id}`,request);
-    }
-    delete(Id:number):Observable<boolean>
-    {
-        return this.http.delete<boolean>(`${this.apiUrl}/delete/${Id}`);
-    }
+
+  getAll(): Observable<ApiResponse<Category[]>> {
+    return this.http.get<ApiResponse<Category[]>>(`${this.apiUrl}/GetAll`);
+  }
+
+  getById(id: number): Observable<ApiResponse<Category>> {
+    return this.http.get<ApiResponse<Category>>(`${this.apiUrl}/GetById/${id}`);
+  }
+
+  create(category: Category): Observable<ApiResponse<Category>> {
+    return this.http.post<ApiResponse<Category>>(
+      `${this.apiUrl}/create`,
+      category,
+    );
+  }
+
+  update(id: number, category: Category): Observable<boolean> {
+    return this.http.put<boolean>(`${this.apiUrl}/update/${id}`, category);
+  }
 }
- 
