@@ -1,181 +1,140 @@
-import { Component, Inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import {
-  ReactiveFormsModule,
-  FormBuilder,
-  FormGroup,
-  Validators
-} from '@angular/forms';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { firstValueFrom } from 'rxjs';
 
-import { CustomerService } from  '../../services/customer.service';
-import { Customer } from '../../models/customer';
-
-import { MatSnackBar } from '@angular/material/snack-bar';
-
+import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
-import { MatRadioModule } from '@angular/material/radio';
-import { MatSelectModule } from '@angular/material/select';
-import { MatIconModule } from '@angular/material/icon';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
-import {
-  MAT_DIALOG_DATA,
-  MatDialogRef,
-  MatDialogContent,
-} from '@angular/material/dialog';
-
-import { SelectOnFocusDirective } from "../../custom-directives/select-on-focus.directive";
+import { CustomerService } from '../../services/customer.service';
+import { CustomerRequest } from '../../models/customer';
+import { getApiMessage } from '../../shared/api-helpers';
+import { failMessage, isOk } from '../../shared/api-result';
 
 @Component({
   selector: 'app-customer-form',
   standalone: true,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
-    RouterModule,
+    MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
-    MatButtonModule,
-    MatRadioModule,
-    MatSelectModule,
-    MatIconModule,
-    SelectOnFocusDirective,
-    MatDialogContent
+    MatCheckboxModule,
+    MatProgressBarModule,
   ],
   templateUrl: './customer-form.component.html',
-  styleUrls: ['./customer-form.component.css']
+  styleUrl: '../../shared/master-page.css',
 })
 export class CustomerFormComponent implements OnInit {
+  private readonly fb = inject(NonNullableFormBuilder);
+  private readonly service = inject(CustomerService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly snackBar = inject(MatSnackBar);
 
-  form!: FormGroup;
+  readonly customerId = signal(0);
+  readonly isEdit = computed(() => this.customerId() > 0);
+  readonly isLoading = signal(false);
+  readonly isSaving = signal(false);
 
-  isEdit = false;
-  id!: number;
-  isSubmitted = false;
+  readonly form = this.fb.group({
+    customerCode: ['', [Validators.required, Validators.maxLength(20)]],
+    customerName: ['', [Validators.required, Validators.maxLength(100)]],
+    city: ['', Validators.maxLength(50)],
+    state: ['', Validators.maxLength(50)],
+    isActive: [true],
+  });
 
-  constructor(
-    private fb: FormBuilder,
-    private service: CustomerService,
-    private route: ActivatedRoute,
-    private router: Router,
-    private snackBar: MatSnackBar,
-    public dialogRef: MatDialogRef<CustomerFormComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: any
-  ) {}
+  async ngOnInit(): Promise<void> {
+    const id = Number(this.route.snapshot.paramMap.get('id'));
 
-  get f() {
-    return this.form.controls;
+    if (id > 0) {
+      this.customerId.set(id);
+      await this.load(id);
+    }
   }
 
-  ngOnInit(): void {
+  private async load(id: number): Promise<void> {
+    this.isLoading.set(true);
 
-    this.form = this.fb.group({
+    try {
+      const response = await firstValueFrom(this.service.getById(id));
 
-      code: ['', [Validators.required, Validators.maxLength(10)]],
+      if (!response.success || !response.data) {
+        this.notify(response.message || 'Customer not found');
+        this.goBack();
+        return;
+      }
 
-      name: ['', [Validators.required, Validators.maxLength(100)]],
+      const c = response.data;
 
-      contactPerson: ['', Validators.maxLength(100)],
+      this.form.patchValue({
+        customerCode: c.customerCode,
+        customerName: c.customerName,
+        city: c.city ?? '',
+        state: c.state ?? '',
+        isActive: c.isActive ?? true,
+      });
 
-      email: ['', [Validators.email, Validators.maxLength(255)]],
+      this.form.markAsPristine();
+    } catch (error) {
+      this.notify(getApiMessage(error, 'Unable to load the customer'));
+      this.goBack();
+    } finally {
+      this.isLoading.set(false);
+    }
+  }
 
-      phoneNumber: ['', Validators.maxLength(20)],
-
-      gstNumber: ['', Validators.maxLength(20)],
-
-      address: ['', Validators.maxLength(250)],
-
-      city: ['', Validators.maxLength(100)],
-
-      state: ['', Validators.maxLength(100)],
-
-      zipCode: ['', Validators.maxLength(10)],
-
-      isActive: [true]
-
-    });
-
-    if (this.data) {
-      this.isEdit = true;
-      this.id = this.data.id;
-     this.form.patchValue({
-  code: this.data.customerCode,
-  name: this.data.customerName,
-  contactPerson: this.data.contactPerson,
-  phoneNumber: this.data.mobileNo,
-  email: this.data.email,
-  gstNumber: this.data.gstNo,
-  address: this.data.address1,
-  city: this.data.city,
-  state: this.data.state,
-  zipCode: this.data.zipCode,
-  isActive: this.data.isActive
-});
+  async save(): Promise<void> {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      this.notify('Please fix the highlighted errors');
+      return;
     }
 
-  }
+    const value = this.form.getRawValue();
 
-submit() {
+    const request: CustomerRequest = {
+      customerCode: value.customerCode.trim(),
+      customerName: value.customerName.trim(),
+      city: value.city.trim() || null,
+      state: value.state.trim() || null,
+      isActive: value.isActive,
+    };
 
-  this.isSubmitted = true;
+    this.isSaving.set(true);
 
-  if (this.form.invalid) {
-    this.form.markAllAsTouched();
-    return;
-  }
+    try {
+      const response = this.isEdit()
+        ? await firstValueFrom(this.service.update(this.customerId(), request))
+        : await firstValueFrom(this.service.create(request));
 
-  const formValue = this.form.value;
-
-  const payload: Customer = {
-    id: this.id,
-    customerCode: formValue.code,
-    customerName: formValue.name,
-    contactPerson: formValue.contactPerson,
-    mobileNo: formValue.phoneNumber,
-    email: formValue.email,
-    address1: formValue.address,
-    address2: '',
-    city: formValue.city,
-    state: formValue.state,
-    country: '',
-    zipCode: formValue.zipCode,
-    gstNo: formValue.gstNumber,
-    isActive: formValue.isActive
-  };
-
-  if (this.isEdit) {
-
-    this.service.Update(this.id, payload).subscribe({
-      next: () => this.dialogRef.close(true),
-      error: () => {
-        this.snackBar.open('Error updating customer', 'Close', {
-          duration: 3000
-        });
+      if (!isOk(response)) {
+        this.notify(failMessage(response, 'Save failed'));
+        return;
       }
-    });
 
-  } else {
+      this.notify(this.isEdit() ? 'Customer updated successfully' : 'Customer created successfully');
 
-    this.service.create(payload).subscribe({
-      next: () => this.dialogRef.close(true),
-      error: () => {
-        this.snackBar.open('Error creating customer', 'Close', {
-          duration: 3000
-        });
-      }
-    });
-
-  }
-}
-
-  allowOnlyNumbers(event: KeyboardEvent) {
-
-    if (!/^[0-9]$/.test(event.key)) {
-      event.preventDefault();
+      this.form.markAsPristine();
+      this.goBack();
+    } catch (error) {
+      // e.g. duplicate code
+      this.notify(getApiMessage(error, 'Unable to save the customer'));
+    } finally {
+      this.isSaving.set(false);
     }
-
   }
 
+  goBack(): void {
+    void this.router.navigate(['/masters/customers']);
+  }
+
+  private notify(message: string): void {
+    this.snackBar.open(message, 'Close', { duration: 4000 });
+  }
 }

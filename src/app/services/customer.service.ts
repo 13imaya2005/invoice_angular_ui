@@ -1,56 +1,61 @@
-import { HttpClient, HttpParams } from "@angular/common/http";
-import { Observable } from "rxjs";
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable } from 'rxjs';
 
-import { Customer } from "../models/customer";
-import { PagedResult } from "../models/paged-result";
-import { Injectable, signal } from "@angular/core";
+import { environment } from '../../environments/environment';
+import { ApiResponse } from '../models/api-response';
+import { PagedResult } from '../models/paged-result';
+import { Customer, CustomerFilter, CustomerRequest } from '../models/customer';
 
+/** All Customer endpoints: api/v1/Customer/... */
 @Injectable({ providedIn: 'root' })
-
 export class CustomerService {
+  private readonly http = inject(HttpClient);
 
-    private apiUrl = "http://localhost:5027/api/Customer";
+  private readonly apiUrl = `${environment.apiUrl}/v1/Customer`;
 
-    customers = signal<Customer[]>([]);
+  getPaged(filter: CustomerFilter): Observable<ApiResponse<PagedResult<Customer>>> {
+    let params = new HttpParams()
+      .set('pageNumber', filter.pageNumber)
+      .set('pageSize', filter.pageSize);
 
-    constructor(private http: HttpClient) { }
-
-    getPagedCustomers(
-        CustomerCode: string,
-        CustomerName: string,
-        pageNumber: number,
-        pageSize: number
-    ): Observable<PagedResult<Customer>> {
-
-        let params = new HttpParams()
-            .set('CustomerCode', CustomerCode || '')
-            .set('CustomerName', CustomerName || '')
-            .set('pageNumber', pageNumber)
-            .set('pageSize', pageSize);
-
-        return this.http.get<PagedResult<Customer>>(
-            `${this.apiUrl}/GetAllPaged`,
-            { params }
-        );
+    if (filter.customerCode?.trim()) {
+      params = params.set('customerCode', filter.customerCode.trim());
     }
 
-    GetAll(): Observable<Customer[]> {
-        return this.http.get<Customer[]>(`${this.apiUrl}/GetAll`);
+    if (filter.customerName?.trim()) {
+      params = params.set('customerName', filter.customerName.trim());
     }
 
-    GetById(Id: number): Observable<Customer> {
-        return this.http.get<Customer>(`${this.apiUrl}/GetById/${Id}`);
+    if (filter.city?.trim()) {
+      params = params.set('city', filter.city.trim());
     }
 
-    create(request: Customer): Observable<number> {
-        return this.http.post<number>(`${this.apiUrl}/Create`, request);
+    if (filter.isActive !== null) {
+      params = params.set('isActive', filter.isActive);
     }
 
-    Update(Id: number, request: Customer): Observable<boolean> {
-        return this.http.put<boolean>(`${this.apiUrl}/Update/${Id}`, request);
-    }
+    return this.http.get<ApiResponse<PagedResult<Customer>>>(
+      `${this.apiUrl}/GetAllPaged`,
+      { params },
+    );
+  }
 
-    delete(id: number): Observable<boolean> {
-        return this.http.delete<boolean>(`${this.apiUrl}/Delete/${id}`);
-    }
+  getById(id: number): Observable<ApiResponse<Customer>> {
+    return this.http.get<ApiResponse<Customer>>(`${this.apiUrl}/GetById/${id}`);
+  }
+
+  // Write calls return `unknown` because older controllers answer with a plain
+  // true/false or a new id, newer ones with ApiResponse<T>. Screens use isOk().
+  create(request: CustomerRequest): Observable<unknown> {
+    return this.http.post<unknown>(`${this.apiUrl}/Create`, request);
+  }
+
+  update(id: number, request: CustomerRequest): Observable<unknown> {
+    return this.http.put<unknown>(`${this.apiUrl}/Update/${id}`, { id, ...request });
+  }
+
+  delete(id: number): Observable<unknown> {
+    return this.http.delete<unknown>(`${this.apiUrl}/Delete/${id}`);
+  }
 }

@@ -1,188 +1,181 @@
-import { Component, OnInit, signal, ViewChild } from "@angular/core";
-import { CommonModule } from "@angular/common";
-import { RouterModule } from "@angular/router";
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { debounceTime } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
-import { CategoryService } from "../../services/category.service";
-import { Category } from "../../models/category";
-import { MatTableModule, MatTableDataSource } from '@angular/material/table';
-import { MatButtonModule } from "@angular/material/button";
-import { MatSnackBar } from '@angular/material/snack-bar';
-import { MatDialog, MatDialogModule } from "@angular/material/dialog";
+
+import { MatTableModule } from '@angular/material/table';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { MatSort, MatSortModule } from '@angular/material/sort';
-import { ConfirmDialogComponent } from "../../shared/confirm-dialog.component";
-import { PagedResult } from '../../models/paged-result';
-import { CategoryFormComponent } from "../cat-form/cat-form.component";
+import { MatSelectModule } from '@angular/material/select';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 
+import { CategoryService } from '../../services/category1.service';
+import { Category, CategoryFilter } from '../../models/category';
+import { getApiMessage } from '../../shared/api-helpers';
+import { failMessage, isOk } from '../../shared/api-result';
+import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
 
- 
 @Component({
-    selector:'app-category-list',
-    standalone:true,
-    imports:[CommonModule,RouterModule,ReactiveFormsModule,MatTableModule,MatButtonModule,
-    MatDialogModule,
+  selector: 'app-category-list',
+  standalone: true,
+  imports: [
+    ReactiveFormsModule,
+    MatTableModule,
+    MatButtonModule,
+    MatIconModule,
+    MatTooltipModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
+    MatProgressBarModule,
     MatPaginatorModule,
-    MatSortModule],
-    templateUrl:'./cat-list.component.html',
-    styleUrls:['./cat-list.component.css']
+    MatDialogModule,
+  ],
+  templateUrl: './cat-list.component.html',
+  styleUrl: '../../shared/master-page.css',
 })
 export class CategoryListComponent implements OnInit {
-    categories = signal<Category[]>([]);
-        // Add a MatTableDataSource to connect with mat-table
-    dataSource!: MatTableDataSource<Category>;
-    displayedColumns:string[] =
-            [
-                'Code',
-                'Name',
-                'description',
-                'isActive',
-                'actions'
-            ];
-              isLoading = false;
- 
-  filterForm!: FormGroup;
-  pageSize = 10;
-  pageIndex = 0;
-  totalRecords = 0;
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
-  @ViewChild(MatSort) sort!: MatSort;
-    constructor(
-        private service:CategoryService,
-        private snackBar:MatSnackBar,
-        private dialog:MatDialog,
-        private fb : FormBuilder,
-    ){}
-    ngOnInit(): void {
-        this.initFilterForm();
-        this.loadcategory();
-    }
-    initFilterForm() {
-    this.filterForm = this.fb.group({
-      Code: [''],
-      Name: [''],
-    });
- 
+  private readonly service = inject(CategoryService);
+  private readonly router = inject(Router);
+  private readonly dialog = inject(MatDialog);
+  private readonly snackBar = inject(MatSnackBar);
+  private readonly fb = inject(FormBuilder);
+  private readonly destroyRef = inject(DestroyRef);
+
+  readonly displayedColumns = [
+    'code',
+    'name',
+    'description',
+    'isActive',
+    'actions',
+  ];
+
+  readonly categories = signal<Category[]>([]);
+  readonly isLoading = signal(false);
+  readonly totalRecords = signal(0);
+  readonly pageIndex = signal(0);
+  readonly pageSize = signal(10);
+
+  // SEARCH FILTERS
+  readonly filterForm = this.fb.group({
+    code: [''],
+    name: [''],
+    isActive: [null as boolean | null],
+  });
+
+  constructor() {
+    // search while typing (wait 400 ms after the last key)
     this.filterForm.valueChanges
-      .pipe(debounceTime(400), distinctUntilChanged())
-      .subscribe((value) => {
-         this.pageIndex=0;
-         this.loadcategory();
+      .pipe(debounceTime(400), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.pageIndex.set(0);
+        void this.load();
       });
   }
-  clearFilters() {
-    this.filterForm.reset({
-      Code: '',
-      Name: '',
-    });
- 
-    this.pageIndex = 0;
-    this.loadcategory();
+
+  ngOnInit(): void {
+    void this.load();
   }
-  onPageChange(event: any) {
-    this.pageIndex = event.pageIndex;
-    this.pageSize = event.pageSize;
-    this.loadcategory();
-  }
-  async loadcategory() {
-    this.isLoading = true;
- 
+
+  async load(): Promise<void> {
+    this.isLoading.set(true);
+
     try {
-      const filter = this.filterForm.value || {};
- 
-      const res: PagedResult<Category> = await firstValueFrom(
-        this.service.getPagedcategory(
-          filter.Code,
-          filter.Name,
-          this.pageIndex + 1, // API usually 1-based
-          this.pageSize,
-        ),
+      const value = this.filterForm.getRawValue();
+
+      const filter: CategoryFilter = {
+        code: value.code ?? '',
+        name: value.name ?? '',
+        isActive: value.isActive,
+        pageNumber: this.pageIndex() + 1,
+        pageSize: this.pageSize(),
+      };
+
+      const response = await firstValueFrom(this.service.getPaged(filter));
+
+      if (!response.success) {
+        this.notify(response.message || 'Unable to load category');
+        return;
+      }
+
+      const page = response.data;
+      const categories = Array.isArray(page) ? page : (page?.data ?? []);
+
+      this.categories.set(categories);
+      this.totalRecords.set(
+        (Array.isArray(page) ? response.totalRecords : page?.totalRecords) ||
+          categories.length,
       );
-     
-      this.categories.set(res?.data ?? []);
-      this.totalRecords = res.totalRecords;
-      this.dataSource = new MatTableDataSource(res?.data ?? []);
- 
-      setTimeout(() => {
-        this.dataSource.sort = this.sort;
-      });
-    } catch {
-      this.snackBar.open('Category Loading Error', 'Close', { duration: 3000 });
+    } catch (error) {
+      this.notify(getApiMessage(error, 'Unable to load categories'));
     } finally {
-      this.isLoading = false;
+      this.isLoading.set(false);
     }
   }
- 
+
+  clearFilters(): void {
+    this.filterForm.reset({
+      code: '',
+      name: '',
+      isActive: null,
+    });
+  }
+
+  onPage(event: PageEvent): void {
+    this.pageIndex.set(event.pageIndex);
+    this.pageSize.set(event.pageSize);
+    void this.load();
+  }
+
+  // ---------------- NAVIGATION ----------------
+  add(): void {
+    void this.router.navigate(['/masters/categories/create']);
+  }
+
+  edit(c: Category): void {
+    void this.router.navigate(['/masters/categories/edit', c.id]);
+  }
+
   // ---------------- DELETE ----------------
-  async delete(id: number, name: string) {
-    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      width: '350px',
-      data: { name },
-    });
- 
-    const result = await firstValueFrom(dialogRef.afterClosed());
-    if (!result) return;
- 
+  async remove(c: Category): Promise<void> {
+    const confirmed = await firstValueFrom(
+      this.dialog
+        .open(ConfirmDialogComponent, {
+          width: '420px',
+          data: { name: c.name },
+        })
+        .afterClosed(),
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
     try {
-      await firstValueFrom(this.service.delete(id));
- 
-      this.snackBar.open('Category deleted successfully', 'Close', {
-        duration: 3000,
-      });
- 
-      await this.loadcategory();
-      this.clearFilters();
-    } catch {
-      this.snackBar.open('Category delete error', 'Close', { duration: 3000 });
+      const response = await firstValueFrom(this.service.delete(c.id));
+
+      this.notify(
+        isOk(response)
+          ? `${c.name} deleted`
+          : failMessage(response, 'Delete failed'),
+      );
+
+      await this.load();
+    } catch (error) {
+      // e.g. "Category is used in sales invoices and cannot be deleted"
+      this.notify(getApiMessage(error, 'Delete failed'));
     }
   }
- 
-  // ---------------- DIALOGS ----------------
-  openAddDialog() {
-    const dialogRef = this.dialog.open(CategoryFormComponent, {
-      width: '900px',
-      maxHeight: '90vh',
-      panelClass: 'custom-dialog',
-      autoFocus: false,
-      data: null,
-    });
- 
-    dialogRef.afterClosed().subscribe((result) => {
-      if (result)
-      {
-          this.snackBar.open('Category created successfully', 'Close', {
-            duration: 3000
-          });
-          this.loadcategory();
-      }
-    });
-  }
- 
-  openEditDialog(Category: any) {
-    const dialogRef = this.dialog.open(CategoryFormComponent, {
-      width: '900px',
-      maxHeight: '90vh',
-      panelClass: 'custom-dialog',
-      autoFocus: false,
-      data: Category,
-    });
- 
-    dialogRef.afterClosed().subscribe((result) => {
-      if (result === true)
-      {
-         this.snackBar.open('Category updated successfully', 'Close', {
-            duration: 3000
-          });
-        this.loadcategory();
-      }
-    });
+
+  private notify(message: string): void {
+    this.snackBar.open(message, 'Close', { duration: 4000 });
   }
 }
- 
-   
- 

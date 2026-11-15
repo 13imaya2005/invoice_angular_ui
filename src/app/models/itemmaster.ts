@@ -4,10 +4,10 @@ export interface Itemmaster
     catCode:string;
     itemBarCode:string;
     itemCode:string;
-    ItemNsme:string;
+    itemName:string;
     description?:number;
     uom:string;
-    rat?:number;
+    rate?:number;
     minimumStock:number;
     maximumStock:number;
     isActive:number;
