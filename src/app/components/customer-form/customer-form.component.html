@@ -25,6 +25,14 @@
         }
       </mat-form-field>
 
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>Mobile Number</mat-label>
+        <input matInput formControlName="mobileNo" maxlength="15" />
+        @if (form.controls.mobileNo.hasError("required")) {
+          <mat-error>Mobile Number is required</mat-error>
+        }
+      </mat-form-field>
+
       <mat-form-field appearance="outline">
         <mat-label>City</mat-label>
         <input matInput formControlName="city" maxlength="50" />

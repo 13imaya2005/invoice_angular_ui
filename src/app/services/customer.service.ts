@@ -27,12 +27,18 @@ export class CustomerService {
       params = params.set('customerName', filter.customerName.trim());
     }
 
+    if (filter.mobileNo?.trim()) {
+      params = params.set('mobileNo', filter.mobileNo.trim());
+    }
+
+
+
     if (filter.city?.trim()) {
       params = params.set('city', filter.city.trim());
     }
 
-    if (filter.isActive !== null) {
-      params = params.set('isActive', filter.isActive);
+    if (typeof filter.isActive === 'boolean') {
+      params = params.set('isActive', String(filter.isActive));
     }
 
     return this.http.get<ApiResponse<PagedResult<Customer>>>(
@@ -51,8 +57,8 @@ export class CustomerService {
     return this.http.post<unknown>(`${this.apiUrl}/Create`, request);
   }
 
-  update(id: number, request: CustomerRequest): Observable<unknown> {
-    return this.http.put<unknown>(`${this.apiUrl}/Update/${id}`, { id, ...request });
+  update(id: number, request: Customer): Observable<unknown> {
+    return this.http.put<unknown>(`${this.apiUrl}/Update/${id}`, { ...request, id });
   }
 
   delete(id: number): Observable<unknown> {

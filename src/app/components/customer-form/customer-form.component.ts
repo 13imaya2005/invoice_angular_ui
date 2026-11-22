@@ -11,7 +11,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { CustomerService } from '../../services/customer.service';
-import { CustomerRequest } from '../../models/customer';
+import { Customer, CustomerRequest } from '../../models/customer';
 import { getApiMessage } from '../../shared/api-helpers';
 import { failMessage, isOk } from '../../shared/api-result';
 
@@ -40,10 +40,12 @@ export class CustomerFormComponent implements OnInit {
   readonly isEdit = computed(() => this.customerId() > 0);
   readonly isLoading = signal(false);
   readonly isSaving = signal(false);
+  private customerRecord: Customer | null = null;
 
   readonly form = this.fb.group({
     customerCode: ['', [Validators.required, Validators.maxLength(20)]],
     customerName: ['', [Validators.required, Validators.maxLength(100)]],
+    mobileNo: ['', [Validators.required, Validators.maxLength(15)]],
     city: ['', Validators.maxLength(50)],
     state: ['', Validators.maxLength(50)],
     isActive: [true],
@@ -71,10 +73,12 @@ export class CustomerFormComponent implements OnInit {
       }
 
       const c = response.data;
+      this.customerRecord = c;
 
       this.form.patchValue({
         customerCode: c.customerCode,
         customerName: c.customerName,
+        mobileNo: c.mobileNo ?? '',
         city: c.city ?? '',
         state: c.state ?? '',
         isActive: c.isActive ?? true,
@@ -101,6 +105,7 @@ export class CustomerFormComponent implements OnInit {
     const request: CustomerRequest = {
       customerCode: value.customerCode.trim(),
       customerName: value.customerName.trim(),
+      mobileNo: value.mobileNo.trim() || null,
       city: value.city.trim() || null,
       state: value.state.trim() || null,
       isActive: value.isActive,
@@ -109,9 +114,26 @@ export class CustomerFormComponent implements OnInit {
     this.isSaving.set(true);
 
     try {
-      const response = this.isEdit()
-        ? await firstValueFrom(this.service.update(this.customerId(), request))
-        : await firstValueFrom(this.service.create(request));
+      let response: unknown;
+
+      if (this.isEdit()) {
+        const customerRecord = this.customerRecord;
+
+        if (!customerRecord) {
+          this.notify('Customer details are still loading');
+          return;
+        }
+
+        response = await firstValueFrom(
+          this.service.update(this.customerId(), {
+            ...customerRecord,
+            ...request,
+            id: this.customerId(),
+          }),
+        );
+      } else {
+        response = await firstValueFrom(this.service.create(request));
+      }
 
       if (!isOk(response)) {
         this.notify(failMessage(response, 'Save failed'));

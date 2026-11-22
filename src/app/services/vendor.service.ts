@@ -27,6 +27,10 @@ export class VendorService {
       params = params.set('vendorName', filter.vendorName.trim());
     }
 
+    if (filter.mobileNo?.trim()) {
+      params = params.set('mobileNo', filter.mobileNo.trim());
+    }
+
     if (filter.city?.trim()) {
       params = params.set('city', filter.city.trim());
     }

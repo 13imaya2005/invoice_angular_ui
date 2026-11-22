@@ -22,6 +22,7 @@ export class CategoryService {
     const params = new HttpParams()
       .set('code', filter.code || '')
       .set('name', filter.name || '')
+      .set('isActive', filter.isActive !== null ? String(filter.isActive) : '') 
       .set('pageNumber', filter.pageNumber)
       .set('pageSize', filter.pageSize);
 
